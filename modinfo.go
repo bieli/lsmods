@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/zcalusic/sysinfo"
@@ -15,6 +16,9 @@ const (
 	libModulesPath      = "/lib/modules/"
 	procListModulesPath = "/proc/modules"
 	modulesListPath     = "/modules.order"
+	descriptionElfSymbolNamePattern = "__UNIQUE_ID_description"
+	descriptionPattern  = `(description=)(.[^=]*)(author=|srcversion=|license=|alias=|depends=|vermagic=|filename=|name=|signature=|retpoline=|intree=|sig_id=|signer=|sig_key=|sig_hashalgo=)`
+	descriptionPatternMatchIdx = 2
 )
 
 type KernelModules map[string]string
@@ -137,20 +141,24 @@ func getModuleDescriptionFromElf(moduleFilePath string) (string, error) {
 		return "", err
 	}
 
-	startDesc := 34 + len("description=")
-
 	for _, sym := range syms {
-		if strings.Contains(sym.Name, "__UNIQUE_ID_description") {
-			section := _elf.Sections[sym.Section]
+		if strings.Contains(sym.Name, descriptionElfSymbolNamePattern) {
+			section := f.Sections[sym.Section]
 			data, err := section.Data()
 			if err != nil {
 				return "", err
 			}
-			data = data[startDesc:]
+			data = data[:]
 			i := 0
 			for ; data[i] != 0x00; i++ {
 			}
-			return string(data[:i]), nil
+
+			r, _ := regexp.Compile(descriptionPattern)
+			for index, match := range r.FindStringSubmatch(string(data[:])) {
+				if index == descriptionPatternMatchIdx {
+					return match, nil
+				}
+			}
 		}
 	}
 
