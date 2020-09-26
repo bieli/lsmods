@@ -6,7 +6,6 @@ import (
 
 	"github.com/alecthomas/kingpin"
 	"github.com/bieli/lsmods/modinfo"
-	//_ "../../modinfo"
 )
 
 const (

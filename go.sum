@@ -11,6 +11,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
+github.com/yalue/elf_reader v0.0.0-20200917174106-f64181725036 h1:/177qMe/aT0rEPJofk9c8TBBcNvBBTqujzVj9C/G4R0=
+github.com/yalue/elf_reader v0.0.0-20200917174106-f64181725036/go.mod h1:XDAyVfTGNnXvl7/BqDEbGuW9CCThog4D82qBJOObVj0=
 github.com/zcalusic/sysinfo v0.0.0-20200820110305-ef1bb2697bc2 h1:Rf2htW3RFKv7qtflSaUm4H6YFHyI0Kx/vR7OM0IJAbE=
 github.com/zcalusic/sysinfo v0.0.0-20200820110305-ef1bb2697bc2/go.mod h1:WGLNaWsjKQ2gXmAHh+MQztgu3FLFAnOFJjFzhpgShCY=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405 h1:yhCVgyC4o1eVCa2tZl7eS0r+SDo693bJlVdllGtEeKM=

@@ -2,10 +2,9 @@ package modinfo
 
 import (
 	"bufio"
+	"debug/elf"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -26,7 +25,7 @@ type KernelModuleInfo struct {
 }
 
 type ModInfo struct {
-	LoadedModules []KernelModuleInfo
+	LoadedModules    []KernelModuleInfo
 	allKernelModules KernelModules
 }
 
@@ -55,7 +54,7 @@ func (mi *ModInfo) GetModInfo() (modulesList []KernelModuleInfo, err error) {
 
 	for _, moduleName := range modules {
 		libModulePath := mi.allKernelModules[moduleName]
-		moduleData, err := readModuleDescription(libModulePath)
+		moduleData, err := readModuleDescription(moduleName, libModulePath)
 		if err != nil {
 			return nil, err
 		}
@@ -64,21 +63,26 @@ func (mi *ModInfo) GetModInfo() (modulesList []KernelModuleInfo, err error) {
 	return modulesList, nil
 }
 
-func readModuleDescription(libModulePath string) (kernelModInfo KernelModuleInfo, err error) {
-	cmd := exec.Command(prepareModuleDescriptionCommand(libModulePath))
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return kernelModInfo, err
-	}
-	if err := cmd.Start(); err != nil {
-		return kernelModInfo, err
-	}
-	desc, err := ioutil.ReadAll(stdout)
-	if err != nil {
-		return kernelModInfo, err
-	}
-	kernelModInfo.Description = string(desc[:])
-	kernelModInfo.Description = string(desc[:])
+func readModuleDescription(moduleName, libModulePath string) (kernelModInfo KernelModuleInfo, err error) {
+	/*
+		cmd := exec.Command(prepareModuleDescriptionCommand(libModulePath))
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return kernelModInfo, err
+		}
+		if err := cmd.Start(); err != nil {
+			return kernelModInfo, err
+		}
+		desc, err := ioutil.ReadAll(stdout)
+		if err != nil {
+			return kernelModInfo, err
+		}
+		kernelModInfo.Description = string(desc[:])
+		kernelModInfo.Name = moduleName
+	*/
+	desc, err := getModuleDescriptionFromElf(libModulePath)
+	kernelModInfo.Description = desc
+	kernelModInfo.Name = moduleName
 	return kernelModInfo, nil
 }
 
@@ -109,9 +113,46 @@ func readAllKernelModules() (lines []string, err error) {
 	return getFirstColumnFromTextFile(libModulesPath + si.Kernel.Release + modulesListPath)
 }
 
+/*
 func prepareModuleDescriptionCommand(libModulePath string) string {
 	return "cat " + libModulesPath + "$(uname -r)/" + libModulePath +
 		"| strings " +
 		"| grep 'description=' " +
 		"| awk 'BEGIN{FS=\"description=\"} END {print $2;}'"
+}
+*/
+func getModuleDescriptionFromElf(moduleFilePath string) (string, error) {
+	fh, err := os.Open(moduleFilePath)
+	if err != nil {
+		return "", err
+	}
+
+	_elf, err := elf.NewFile(fh)
+	if err != nil {
+		return "", err
+	}
+
+	syms, err := _elf.Symbols()
+	if err != nil {
+		return "", err
+	}
+
+	startDesc := 34 + len("description=")
+
+	for _, sym := range syms {
+		if strings.Contains(sym.Name, "__UNIQUE_ID_description") {
+			section := _elf.Sections[sym.Section]
+			data, err := section.Data()
+			if err != nil {
+				return "", err
+			}
+			data = data[startDesc:]
+			i := 0
+			for ; data[i] != 0x00; i++ {
+			}
+			return string(data[:i]), nil
+		}
+	}
+
+	return "", fmt.Errorf("no description found")
 }
