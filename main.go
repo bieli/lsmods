@@ -1,24 +1,42 @@
-package modinfo
+package main
 
 import (
 	"bufio"
 	"debug/elf"
 	"fmt"
+	"github.com/zcalusic/sysinfo"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/zcalusic/sysinfo"
+	"text/tabwriter"
 )
 
+func main() {
+	log.Printf("Currently loaded kernel modules with descriptions:")
+	modInfo, err := NewModInfo()
+	if err != nil {
+		log.Fatal(err)
+	}
+	modules, err := modInfo.GetModInfo()
+	if err != nil {
+		log.Fatal(err)
+	}
+	writer := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
+	for _, moduleInfo := range modules {
+		fmt.Fprintf(writer, "%s\t%s\n", moduleInfo.Name, moduleInfo.Description)
+	}
+	writer.Flush()
+}
+
 const (
-	libModulesPath      = "/lib/modules/"
-	procListModulesPath = "/proc/modules"
-	modulesListPath     = "/modules.order"
+	libModulesPath                  = "/lib/modules/"
+	procListModulesPath             = "/proc/modules"
+	modulesListPath                 = "/modules.order"
 	descriptionElfSymbolNamePattern = "__UNIQUE_ID_description"
-	descriptionPattern  = `(description=)(.[^=]*)(author=|srcversion=|license=|alias=|depends=|vermagic=|filename=|name=|signature=|retpoline=|intree=|sig_id=|signer=|sig_key=|sig_hashalgo=)`
-	descriptionPatternMatchIdx = 2
+	descriptionPattern              = `(description=)(.[^=]*)(author=|srcversion=|license=|alias=|depends=|vermagic=|filename=|name=|signature=|retpoline=|intree=|sig_id=|signer=|sig_key=|sig_hashalgo=)`
+	descriptionPatternMatchIdx      = 2
 )
 
 type KernelModules map[string]string
@@ -37,8 +55,9 @@ func NewModInfo() (*ModInfo, error) {
 	var si sysinfo.SysInfo
 	si.GetSysInfo()
 
-	modInfo := &ModInfo{}
-	modInfo.allKernelModules = make(KernelModules)
+	modInfo := &ModInfo{
+		allKernelModules: make(KernelModules),
+	}
 
 	kernelModulesPaths, err := readAllKernelModules()
 	if err != nil {
@@ -47,8 +66,11 @@ func NewModInfo() (*ModInfo, error) {
 
 	for _, kernelModulePath := range kernelModulesPaths {
 		_, fileName := filepath.Split(kernelModulePath)
-		moduleName := strings.Replace(fileName, ".ko", "", 0)
-		modInfo.allKernelModules[moduleName] = kernelModulePath
+		moduleName := strings.Replace(fileName, ".ko", "", 1)
+		moduleFullPath := libModulesPath + si.Kernel.Release + "/" + kernelModulePath
+		if len(moduleName) > 0 && len(moduleFullPath) > 0 {
+			modInfo.allKernelModules[moduleName] = moduleFullPath
+		}
 	}
 	return modInfo, nil
 }
@@ -57,34 +79,24 @@ func (mi *ModInfo) GetModInfo() (modulesList []KernelModuleInfo, err error) {
 	modules, err := readProcModules()
 
 	for _, moduleName := range modules {
-		libModulePath := mi.allKernelModules[moduleName]
-		moduleData, err := readModuleDescription(moduleName, libModulePath)
-		if err != nil {
-			return nil, err
+		// it's possible to find modules without description i.e. hid, parport, lp
+		if libModulePath, ok := mi.allKernelModules[moduleName]; ok {
+			moduleData, err := readModuleDescription(moduleName, libModulePath)
+			if err != nil {
+				return nil, err
+			}
+			modulesList = append(modulesList, moduleData)
 		}
-		modulesList = append(modulesList, moduleData)
 	}
 	return modulesList, nil
 }
 
 func readModuleDescription(moduleName, libModulePath string) (kernelModInfo KernelModuleInfo, err error) {
-	/*
-		cmd := exec.Command(prepareModuleDescriptionCommand(libModulePath))
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			return kernelModInfo, err
-		}
-		if err := cmd.Start(); err != nil {
-			return kernelModInfo, err
-		}
-		desc, err := ioutil.ReadAll(stdout)
-		if err != nil {
-			return kernelModInfo, err
-		}
-		kernelModInfo.Description = string(desc[:])
-		kernelModInfo.Name = moduleName
-	*/
 	desc, err := getModuleDescriptionFromElf(libModulePath)
+	if err != nil {
+		return kernelModInfo, fmt.Errorf("[ERROR] Problem with get module '%s' description: %s", libModulePath, err)
+	}
+
 	kernelModInfo.Description = desc
 	kernelModInfo.Name = moduleName
 	return kernelModInfo, nil
@@ -93,7 +105,7 @@ func readModuleDescription(moduleName, libModulePath string) (kernelModInfo Kern
 func getFirstColumnFromTextFile(filePath string) (lines []string, err error) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("[ERROR] Problem with open file %s", err)
+		return nil, fmt.Errorf("[ERROR] Problem with open file: %s", err)
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
@@ -117,14 +129,6 @@ func readAllKernelModules() (lines []string, err error) {
 	return getFirstColumnFromTextFile(libModulesPath + si.Kernel.Release + modulesListPath)
 }
 
-/*
-func prepareModuleDescriptionCommand(libModulePath string) string {
-	return "cat " + libModulesPath + "$(uname -r)/" + libModulePath +
-		"| strings " +
-		"| grep 'description=' " +
-		"| awk 'BEGIN{FS=\"description=\"} END {print $2;}'"
-}
-*/
 func getModuleDescriptionFromElf(moduleFilePath string) (string, error) {
 	fh, err := os.Open(moduleFilePath)
 	if err != nil {
@@ -143,7 +147,7 @@ func getModuleDescriptionFromElf(moduleFilePath string) (string, error) {
 
 	for _, sym := range syms {
 		if strings.Contains(sym.Name, descriptionElfSymbolNamePattern) {
-			section := f.Sections[sym.Section]
+			section := _elf.Sections[sym.Section]
 			data, err := section.Data()
 			if err != nil {
 				return "", err
@@ -161,6 +165,5 @@ func getModuleDescriptionFromElf(moduleFilePath string) (string, error) {
 			}
 		}
 	}
-
-	return "", fmt.Errorf("no description found")
+	return "", nil
 }
