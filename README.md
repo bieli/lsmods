@@ -1,4 +1,5 @@
 # lsmods
+![goreport passing](https://goreportcard.com/badge/github.com/bieli/lsmods)
 
 
 ## How to compile
