@@ -23,19 +23,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	modules, err := modInfo.GetModInfo()
+	_, err = modInfo.GetModInfo(true)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-  sort.Sort(NameSorter(modules))
-
-	writer := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
-
-	for _, moduleInfo := range modules {
-		fmt.Fprintf(writer, "%s\t%s\n", moduleInfo.Name, moduleInfo.Description)
-	}
-	writer.Flush()
+	
+	modInfo.Output()
 }
 
 const (
@@ -53,7 +46,6 @@ type NameSorter []KernelModuleInfo
 func (a NameSorter) Len() int           { return len(a) }
 func (a NameSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a NameSorter) Less(i, j int) bool { return a[i].Name < a[j].Name }
-
 
 type KernelModules map[string]string
 
@@ -76,35 +68,31 @@ func NewModInfo(si sysinfo.SysInfo) (*ModInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	for _, kernelModulePath := range kernelModulesPaths {
-		_, fileName := filepath.Split(kernelModulePath)
-		moduleName := strings.Replace(fileName, ".ko", "", 1)
-		moduleFullPath := libModulesPath + si.Kernel.Release + "/" + kernelModulePath
-		if len(moduleName) > 0 && len(moduleFullPath) > 0 {
-			modInfo.allKernelModules[moduleName] = moduleFullPath
-		}
-	}
-	return modInfo, nil
+	return prepareAllKernelModulesList(kernelModulesPaths, si, modInfo), nil
 }
 
-func (mi *ModInfo) GetModInfo() (modulesList []KernelModuleInfo, err error) {
+func (mi *ModInfo) GetModInfo(sortByName bool) (modulesList []KernelModuleInfo, err error) {
 	modules, err := readProcModules()
 
 	for _, moduleName := range modules {
 		// it's possible to find modules without description i.e. hid, parport, lp
 		if libModulePath, ok := mi.allKernelModules[moduleName]; ok {
-			moduleData, err := readModuleDescription(moduleName, libModulePath)
+			moduleData, err := mi.readModuleDescription(moduleName, libModulePath)
 			if err != nil {
 				return nil, err
 			}
 			modulesList = append(modulesList, moduleData)
 		}
 	}
+
+	if sortByName {
+	  sort.Sort(NameSorter(modulesList))
+	}
+  mi.LoadedModules = modulesList
 	return modulesList, nil
 }
 
-func readModuleDescription(moduleName, libModulePath string) (kernelModInfo KernelModuleInfo, err error) {
+func (mi *ModInfo) readModuleDescription(moduleName, libModulePath string) (kernelModInfo KernelModuleInfo, err error) {
 	desc, err := getModuleDescriptionFromElf(libModulePath)
 	if err != nil {
 		return kernelModInfo, fmt.Errorf("[ERROR] Problem with get module '%s' description: %s", libModulePath, err)
@@ -113,6 +101,27 @@ func readModuleDescription(moduleName, libModulePath string) (kernelModInfo Kern
 	kernelModInfo.Description = desc
 	kernelModInfo.Name = moduleName
 	return kernelModInfo, nil
+}
+
+func (mi *ModInfo) Output() {
+  writer := new(tabwriter.Writer)
+	writer.Init(os.Stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
+	for _, moduleInfo := range mi.LoadedModules {
+		fmt.Fprintf(writer, "%s\t%s\t\n", moduleInfo.Name, moduleInfo.Description)
+	}
+	writer.Flush()
+}
+
+func prepareAllKernelModulesList(kernelModulesPaths []string, si sysinfo.SysInfo, modInfo *ModInfo) *ModInfo {
+	for _, kernelModulePath := range kernelModulesPaths {
+		_, fileName := filepath.Split(kernelModulePath)
+		moduleName := strings.Replace(fileName, ".ko", "", 1)
+		moduleFullPath := libModulesPath + si.Kernel.Release + "/" + kernelModulePath
+		if len(moduleName) > 0 && len(moduleFullPath) > 0 {
+			modInfo.allKernelModules[moduleName] = moduleFullPath
+		}
+	}
+	return modInfo
 }
 
 func getFirstColumnFromTextFile(filePath string) (lines []string, err error) {
@@ -164,17 +173,14 @@ func getModuleDescriptionFromElf(moduleFilePath string) (string, error) {
 				return "", err
 			}
 			data = data[:]
-			i := 0
-			for ; data[i] != 0x00; i++ {
-			}
-
 			r, _ := regexp.Compile(descriptionPattern)
 			for index, match := range r.FindStringSubmatch(string(data[:])) {
 				if index == descriptionPatternMatchIdx {
-					return match, nil
+					return match[:len(match) - 1], nil
 				}
 			}
 		}
 	}
 	return "", nil
 }
+
