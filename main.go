@@ -9,13 +9,17 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"text/tabwriter"
 )
 
 func main() {
 	log.Printf("Currently loaded kernel modules with descriptions:")
-	modInfo, err := NewModInfo()
+	var si sysinfo.SysInfo
+	si.GetSysInfo()
+
+	modInfo, err := NewModInfo(si)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,7 +27,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+  sort.Sort(NameSorter(modules))
+
 	writer := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
+
 	for _, moduleInfo := range modules {
 		fmt.Fprintf(writer, "%s\t%s\n", moduleInfo.Name, moduleInfo.Description)
 	}
@@ -39,6 +47,14 @@ const (
 	descriptionPatternMatchIdx      = 2
 )
 
+// NameSorter sorts KernelModules struct by Name field.
+type NameSorter []KernelModuleInfo
+
+func (a NameSorter) Len() int           { return len(a) }
+func (a NameSorter) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a NameSorter) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
+
 type KernelModules map[string]string
 
 type KernelModuleInfo struct {
@@ -51,15 +67,12 @@ type ModInfo struct {
 	allKernelModules KernelModules
 }
 
-func NewModInfo() (*ModInfo, error) {
-	var si sysinfo.SysInfo
-	si.GetSysInfo()
-
+func NewModInfo(si sysinfo.SysInfo) (*ModInfo, error) {
 	modInfo := &ModInfo{
 		allKernelModules: make(KernelModules),
 	}
 
-	kernelModulesPaths, err := readAllKernelModules()
+	kernelModulesPaths, err := readAllKernelModules(si)
 	if err != nil {
 		return nil, err
 	}
@@ -123,9 +136,7 @@ func readProcModules() (lines []string, err error) {
 	return getFirstColumnFromTextFile(procListModulesPath)
 }
 
-func readAllKernelModules() (lines []string, err error) {
-	var si sysinfo.SysInfo
-	si.GetSysInfo()
+func readAllKernelModules(si sysinfo.SysInfo) (lines []string, err error) {
 	return getFirstColumnFromTextFile(libModulesPath + si.Kernel.Release + modulesListPath)
 }
 
