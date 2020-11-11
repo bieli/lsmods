@@ -20,7 +20,6 @@ xt_MASQUERADE			Xtables: automatic-address SNAT
 nf_conntrack_netlink		
 xfrm_user			
 xfrm_algo			
-nft_counter			
 xt_addrtype			Xtables: address type match
 
 ```
