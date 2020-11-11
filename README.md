@@ -1,29 +1,34 @@
-# lsmods
+# lsmods - show all enabled Linux Kernel modules with descriptions
+
 ![goreport passing](https://goreportcard.com/badge/github.com/bieli/lsmods)
 [![Build Status](https://travis-ci.org/bieli/lsmods.png)](https://travis-ci.org/bieli/lsmods)
 
 ## How to compile
 ```bash
-$ go build -i main.go
+$ make build
 ```
 
 ## How to run
 ```bash
-$ chmod a+x ./main
-$ ./main | head
-2020/09/28 01:09:31 Currently loaded kernel modules with descriptions:
-veth				Virtual Ethernet Tunnel
-usblp				USB Printer Device Class driver
-rfcomm				Bluetooth RFCOMM ver 1.11
-xt_conntrack			Xtables: connection tracking state match
+$ chmod a+x ./lsmods
+$ ./lsmods | tail
+2020/11/11 23:17:30 Currently loaded kernel modules with descriptions:
+xor				
+xt_CHECKSUM			Xtables: checksum modification
 xt_MASQUERADE			Xtables: automatic-address SNAT
-nf_conntrack_netlink		
-xfrm_user			
-xfrm_algo			
 xt_addrtype			Xtables: address type match
-
+xt_comment			Xtables: No-op match which can be tagged with a comment
+xt_conntrack			Xtables: connection tracking state match
+xt_nat				
+xt_state			ip[6]_tables connection tracking state match module
+xt_tcpudp			Xtables: TCP, UDP and UDP-Lite match
+zstd_compress			Zstd Compressor
 ```
 
+## How to run unit test
+```bash
+$ make test
+```
 
 
 
