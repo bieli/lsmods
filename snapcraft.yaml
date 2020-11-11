@@ -1,32 +1,21 @@
 name: lsmods
-version: '0.0.1'
-summary: Show all loaded kernel module descriptions.
+version: "1.0.0"
+summary: LSMODS let you inspect loaded kernel modules with descriptions
 description: |
-  LSMODS let you inspect loaded kernel modules.
-base: core20
-confinement: devmode
+  Show all loaded kernel modules with descriptions
+grade: stable
+confinement: strict
+
+parts:
+  go:
+    source-tag: go1.15.4
+  lsmods:
+    plugin: go
+    go-importpath: github.com/bieli/lsmods
+    source: .
+    source-type: git
+    after: [go]
 
 apps:
   lsmods:
     command: bin/lsmods
-
-parts:
-  go:
-    source-tag: go1.14
-    plugin: gcc
-
-  lsmods:
-    after: [go]
-    source: https://github.com/bieli/lsmods
-    source-type: git
-    plugin: go
-    go-importpath: github.com/bieli/lsmods
-    override-build: |
-      echo "\nStarting override-build for lsmods part:"
-      export GOPATH=$(dirname $SNAPCRAFT_PART_INSTALL)/go
-      cd $GOPATH/src/github.com/bieli/lsmods
-      go get -u ./...
-      go install ./...
-      mkdir $SNAPCRAFT_PART_INSTALL/bin
-      mv $GOPATH/bin/lsmods $SNAPCRAFT_PART_INSTALL/bin/lsmods
-      strip --remove-section=.comment --remove-section=.note $SNAPCRAFT_PART_INSTALL/bin/lsmods
