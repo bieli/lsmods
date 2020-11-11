@@ -30,10 +30,7 @@ zstd_compress			Zstd Compressor
 $ make test
 ```
 
-
-
 ## How to run with Docker
-
 
 ### Build Docker container
 ```bash
@@ -41,6 +38,7 @@ $ sudo docker build -t lsmods .
 ```
 
 ### Debug inside Docker container
+Warning ! Below command show kernel modules from **host machine** - not from docker container (it's impossible to do this way).
 ```bash
-$ docker run -it lsmods /bin/bash
+$ docker run --privileged --cap-add=ALL -v /dev:/dev -v /lib/modules:/lib/modules -it lsmods /go/src/app/lsmods
 ```
