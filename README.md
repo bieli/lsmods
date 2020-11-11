@@ -1,6 +1,6 @@
 # lsmods
 ![goreport passing](https://goreportcard.com/badge/github.com/bieli/lsmods)
-
+![Travis CI](https://api.travis-ci.org/bieli/lsmods.svg?branch=master&status=created)
 
 ## How to compile
 ```bash
