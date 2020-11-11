@@ -4,3 +4,5 @@ build:
 run:
 	./lsmods
 
+test:
+	go test -v ./...
