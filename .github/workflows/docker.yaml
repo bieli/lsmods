@@ -10,7 +10,6 @@ jobs:
       - name: Download Dockerfile from external repository
         run: |
           curl -LJO https://raw.githubusercontent.com/bieli/lsmods/master/Dockerfile
-        working-directory: /tmp/docker_dir
 
       - name: Build Docker image
         run: |
