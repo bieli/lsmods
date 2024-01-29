@@ -6,7 +6,6 @@ Terminal tool to show all enabled Linux Kernel modules with descriptions (line b
 
 ![go report](https://goreportcard.com/badge/github.com/bieli/lsmods)
 
-
 ## How to compile
 ```bash
 $ make build
@@ -32,6 +31,11 @@ zstd_compress			Zstd Compressor
 ## How to run unit test
 ```bash
 $ make test
+```
+
+## How to run
+```bash
+$ make run
 ```
 
 ## How to run with Docker
