@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM golang:1.21.6-bullseye
 
 RUN apt-get update
 RUN apt-get install -y \
@@ -7,15 +7,16 @@ RUN apt-get install -y \
     curl \
     gnupg-agent \
     software-properties-common
-RUN apt-get install -y golang kmod
+RUN #apt-get install -y golang kmod
+RUN apt-get install -y kmod
 
 WORKDIR /go/src/app
 COPY . .
 
-RUN go build -i main.go
-RUN chmod a+x main.go
+RUN go build -o lsmods cmd/main.go
+RUN chmod a+x lsmods
 
-RUN ls -la /go/src/app/main
+RUN ls -la /go/src/app/lsmods
 RUN uname -a
 
-CMD ["./main"]
+CMD ["./lsmods"]
