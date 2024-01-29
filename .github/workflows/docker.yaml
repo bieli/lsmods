@@ -1,0 +1,21 @@
+name: Build and Run Docker Image
+
+on: [push, pull_request]
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Dockerfile from external repository
+        run: |
+          curl -LJO https://raw.githubusercontent.com/bieli/lsmods/master/Dockerfile
+        working-directory: /tmp/docker_dir
+
+      - name: Build Docker image
+        run: |
+          docker build -t lsmods .
+
+      - name: Run lsmods inside the Docker container
+        run: |
+          docker run --privileged --cap-add=ALL -v /dev:/dev -v /lib/modules:/lib/modules -it lsmods /go/src/app/lsmods
