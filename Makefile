@@ -1,5 +1,5 @@
 build:
-	go build -i main.go && mv main lsmods
+	go build -o ./lsmods cmd/main.go
 
 run:
 	./lsmods

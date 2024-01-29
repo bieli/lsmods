@@ -1,7 +1,11 @@
-# lsmods - show all enabled Linux Kernel modules with descriptions
+# lsmods
 
-![goreport passing](https://goreportcard.com/badge/github.com/bieli/lsmods)
-[![Build Status](https://travis-ci.org/bieli/lsmods.png)](https://travis-ci.org/bieli/lsmods)
+Terminal tool to show all enabled Linux Kernel modules with descriptions (line by line).
+
+![CI status](https://github.com/bieli/lsmods/actions/workflows/ci.yaml/badge.svg)
+
+![go report](https://goreportcard.com/badge/github.com/bieli/lsmods)
+
 
 ## How to compile
 ```bash

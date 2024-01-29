@@ -22,4 +22,4 @@ jobs:
       - name: Display Go version
         run: go version
       - name: Run tests
-        run: go test
+        run: go test -v ./...
