@@ -1,8 +1,10 @@
 build:
 	go build -o ./lsmods cmd/main.go
-
 run:
 	./lsmods
-
-test:
+tests:
 	go test -v ./...
+all:
+	make build
+	make tests
+	make run

@@ -8,6 +8,13 @@ import (
 	"text/tabwriter"
 )
 
+const (
+	modulesListPath                 = "/modules.order"
+	descriptionElfSymbolNamePattern = "__UNIQUE_ID_description"
+	descriptionPattern              = `(description=)(.[^=]*)(author=|srcversion=|license=|alias=|depends=|vermagic=|filename=|name=|signature=|retpoline=|intree=|sig_id=|signer=|sig_key=|sig_hashalgo=)`
+	descriptionPatternMatchIdx      = 2
+)
+
 type KernelModules map[string]string
 
 type KernelModuleInfo struct {
@@ -21,7 +28,7 @@ type ModInfo struct {
 	utils            *Utils
 }
 
-func NewModInfo(si sysinfo.SysInfo, libModulesPath string, modulesListPath string) (*ModInfo, error) {
+func NewModInfo(si sysinfo.SysInfo, libModulesPath string) (*ModInfo, error) {
 	modInfo := &ModInfo{
 		allKernelModules: make(KernelModules),
 		utils:            &Utils{},
@@ -34,13 +41,13 @@ func NewModInfo(si sysinfo.SysInfo, libModulesPath string, modulesListPath strin
 	return modInfo.utils.PrepareAllKernelModulesList(libModulesPath, kernelModulesPaths, si, modInfo), nil
 }
 
-func (mi *ModInfo) GetModInfo(sortByName bool, procListModulesPath string, libModulePath string, descriptionElfSymbolNamePattern string, descriptionPattern string, descriptionPatternMatchIdx int) (modulesList []KernelModuleInfo, err error) {
+func (mi *ModInfo) GetModInfo(sortByName bool, procListModulesPath string) (modulesList []KernelModuleInfo, err error) {
 	modules, err := mi.utils.ReadProcModules(procListModulesPath)
 
 	for _, moduleName := range modules {
 		// it's possible to find modules without description i.e. hid, parport, lp
 		if libModulePath, ok := mi.allKernelModules[moduleName]; ok {
-			moduleData, err := mi.readModuleDescription(moduleName, libModulePath, descriptionElfSymbolNamePattern, descriptionPattern, descriptionPatternMatchIdx)
+			moduleData, err := mi.readModuleDescription(moduleName, libModulePath)
 			if err != nil {
 				return nil, err
 			}
@@ -55,7 +62,7 @@ func (mi *ModInfo) GetModInfo(sortByName bool, procListModulesPath string, libMo
 	return modulesList, nil
 }
 
-func (mi *ModInfo) readModuleDescription(moduleName, libModulePath string, descriptionElfSymbolNamePattern string, descriptionPattern string, descriptionPatternMatchIdx int) (kernelModInfo KernelModuleInfo, err error) {
+func (mi *ModInfo) readModuleDescription(moduleName, libModulePath string) (kernelModInfo KernelModuleInfo, err error) {
 	desc, err := mi.utils.GetModuleDescriptionFromElf(libModulePath, descriptionElfSymbolNamePattern, descriptionPattern, descriptionPatternMatchIdx)
 	if err != nil {
 		return kernelModInfo, fmt.Errorf("[ERROR] Problem with get module '%s' description: %s", libModulePath, err)
