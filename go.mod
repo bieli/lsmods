@@ -1,10 +1,9 @@
 module github.com/bieli/lsmods
 
-go 1.14
+go 1.21
 
-require (
-	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
-	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
-	github.com/yalue/elf_reader v0.0.0-20200917174106-f64181725036 // indirect
-	github.com/zcalusic/sysinfo v0.0.0-20200820110305-ef1bb2697bc2
-)
+toolchain go1.21.6
+
+require github.com/zcalusic/sysinfo v1.0.2
+
+require github.com/google/uuid v1.3.1 // indirect
