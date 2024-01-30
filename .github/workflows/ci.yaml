@@ -25,5 +25,7 @@ jobs:
         run: lsmod
       - name: check kernel version
         run: uname -a
+      - name: show mod TLS info
+        run: modinfo /lib/modules/5.15.84-051584-generic/kernel/net/tls/tls.ko
       - name: Run tests
         run: go test -v ./...
