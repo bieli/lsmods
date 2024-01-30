@@ -4,20 +4,26 @@ import (
 	"bufio"
 	"debug/elf"
 	"fmt"
-	"github.com/zcalusic/sysinfo"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 )
 
+const (
+	modulesListPath                 = "/modules.order"
+	descriptionElfSymbolNamePattern = "__UNIQUE_ID_description"
+	descriptionPattern              = `(description=)(.[^=]*)(author=|srcversion=|license=|alias=|depends=|vermagic=|filename=|name=|signature=|retpoline=|intree=|sig_id=|signer=|sig_key=|sig_hashalgo=)`
+	descriptionPatternMatchIdx      = 2
+)
+
 type Utils struct{}
 
-func (u *Utils) PrepareAllKernelModulesList(libModulesPath string, kernelModulesPaths []string, si sysinfo.SysInfo, modInfo *ModInfo) *ModInfo {
+func (u *Utils) PrepareAllKernelModulesList(libModulesPath string, kernelModulesPaths []string, kernelRelease string, modInfo *ModInfo) *ModInfo {
 	for _, kernelModulePath := range kernelModulesPaths {
 		_, fileName := filepath.Split(kernelModulePath)
 		moduleName := strings.Replace(fileName, ".ko", "", 1)
-		moduleFullPath := libModulesPath + si.Kernel.Release + "/" + kernelModulePath
+		moduleFullPath := libModulesPath + kernelRelease + "/" + kernelModulePath
 		if len(moduleName) > 0 && len(moduleFullPath) > 0 {
 			modInfo.allKernelModules[moduleName] = moduleFullPath
 		}
@@ -46,11 +52,11 @@ func (u *Utils) ReadProcModules(procListModulesPath string) (lines []string, err
 	return u.GetFirstColumnFromTextFile(procListModulesPath)
 }
 
-func (u *Utils) ReadAllKernelModules(si sysinfo.SysInfo, libModulesPath string, modulesListPath string) (lines []string, err error) {
-	return u.GetFirstColumnFromTextFile(libModulesPath + si.Kernel.Release + modulesListPath)
+func (u *Utils) ReadAllKernelModules(libModulesPath string, kernelRelease string, modulesListPath string) (lines []string, err error) {
+	return u.GetFirstColumnFromTextFile(libModulesPath + kernelRelease + modulesListPath)
 }
 
-func (u *Utils) GetModuleDescriptionFromElf(moduleFilePath string, descriptionElfSymbolNamePattern string, descriptionPattern string, descriptionPatternMatchIdx int) (string, error) {
+func (u *Utils) GetModuleDescriptionFromElf(moduleFilePath string) (string, error) {
 	fh, err := os.Open(moduleFilePath)
 	if err != nil {
 		return "", err

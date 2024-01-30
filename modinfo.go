@@ -8,13 +8,6 @@ import (
 	"text/tabwriter"
 )
 
-const (
-	modulesListPath                 = "/modules.order"
-	descriptionElfSymbolNamePattern = "__UNIQUE_ID_description"
-	descriptionPattern              = `(description=)(.[^=]*)(author=|srcversion=|license=|alias=|depends=|vermagic=|filename=|name=|signature=|retpoline=|intree=|sig_id=|signer=|sig_key=|sig_hashalgo=)`
-	descriptionPatternMatchIdx      = 2
-)
-
 type KernelModules map[string]string
 
 type KernelModuleInfo struct {
@@ -34,11 +27,11 @@ func NewModInfo(si sysinfo.SysInfo, libModulesPath string) (*ModInfo, error) {
 		utils:            &Utils{},
 	}
 
-	kernelModulesPaths, err := modInfo.utils.ReadAllKernelModules(si, libModulesPath, modulesListPath)
+	kernelModulesPaths, err := modInfo.utils.ReadAllKernelModules(libModulesPath, si.Kernel.Release, modulesListPath)
 	if err != nil {
 		return nil, err
 	}
-	return modInfo.utils.PrepareAllKernelModulesList(libModulesPath, kernelModulesPaths, si, modInfo), nil
+	return modInfo.utils.PrepareAllKernelModulesList(libModulesPath, kernelModulesPaths, si.Kernel.Release, modInfo), nil
 }
 
 func (mi *ModInfo) GetModInfo(sortByName bool, procListModulesPath string) (modulesList []KernelModuleInfo, err error) {
@@ -63,7 +56,7 @@ func (mi *ModInfo) GetModInfo(sortByName bool, procListModulesPath string) (modu
 }
 
 func (mi *ModInfo) readModuleDescription(moduleName, libModulePath string) (kernelModInfo KernelModuleInfo, err error) {
-	desc, err := mi.utils.GetModuleDescriptionFromElf(libModulePath, descriptionElfSymbolNamePattern, descriptionPattern, descriptionPatternMatchIdx)
+	desc, err := mi.utils.GetModuleDescriptionFromElf(libModulePath)
 	if err != nil {
 		return kernelModInfo, fmt.Errorf("[ERROR] Problem with get module '%s' description: %s", libModulePath, err)
 	}
