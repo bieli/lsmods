@@ -3,7 +3,7 @@ build:
 run:
 	./lsmods
 tests:
-	go test -v ./...
+	export WORKSPACE=`pwd` && go test -v ./...
 all:
 	make build
 	make tests

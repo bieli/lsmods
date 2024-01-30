@@ -27,5 +27,7 @@ jobs:
         run: uname -a
       - name: show mod TLS info
         run: modinfo /lib/modules/`uname -r`/kernel/net/tls/tls.ko
+      - name: show $GITHUB_WORKSPACE
+        run: echo $GITHUB_WORKSPACE
       - name: Run tests
-        run: go test -v ./...
+        run: export WORKSPACE=$GITHUB_WORKSPACE && go test -v ./...

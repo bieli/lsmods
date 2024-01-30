@@ -1,14 +1,16 @@
 package lsmods
 
 import (
+	"os"
+
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 const (
-	exampleKernelModulElfFIlePath1 = "./test/assets/i2c-smbus.ko"
+	exampleKernelModulElfFIlePath1 = "/test/assets/i2c-smbus.ko"
 	expectedDescription1           = "SMBus protocol extensions support"
-	// exampleKernelModulElfFIlePath2 = "./test/assets/tls.ko"
+	// exampleKernelModulElfFIlePath2 = "/test/assets/tls.ko"
 	// expectedDescription2           = "Transport Layer Security Support"
 	exampleTextFile = "./test/assets/example.txt"
 )
@@ -16,7 +18,9 @@ const (
 func TestUtilsGetModuleDescriptionFromElfSuccess(t *testing.T) {
 	utils := &Utils{}
 
-	result, _ := utils.GetModuleDescriptionFromElf(exampleKernelModulElfFIlePath1)
+	resourcePath := os.Getenv("WORKSPACE") + exampleKernelModulElfFIlePath1
+	println("resourcePath:", resourcePath)
+	result, _ := utils.GetModuleDescriptionFromElf(resourcePath)
 
 	assert.Equal(t, result, expectedDescription1)
 }
