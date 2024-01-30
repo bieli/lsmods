@@ -21,5 +21,9 @@ jobs:
           go get .
       - name: Display Go version
         run: go version
+      - name: List localhost kernel modules - for test
+        run: lsmod
+      - name: check kernel version
+        run: uname -a
       - name: Run tests
         run: go test -v ./...
