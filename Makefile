@@ -3,7 +3,7 @@ build:
 run:
 	./lsmods
 tests:
-	export WORKSPACE=`pwd` && go test -v ./...
+	export KMODULE=/lib/modules/`uname -r`/kernel/net/tls/tls.ko && go test -v ./...
 all:
 	make build
 	make tests

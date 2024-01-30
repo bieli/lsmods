@@ -8,21 +8,18 @@ import (
 )
 
 const (
-	exampleKernelModulElfFIlePath1 = "/test/assets/i2c-smbus.ko"
-	expectedDescription1           = "SMBus protocol extensions support"
-	// exampleKernelModulElfFIlePath2 = "/test/assets/tls.ko"
-	// expectedDescription2           = "Transport Layer Security Support"
-	exampleTextFile = "./test/assets/example.txt"
+	expectedDescription = "Transport Layer Security Support"
+	exampleTextFile     = "./test/assets/example.txt"
 )
 
 func TestUtilsGetModuleDescriptionFromElfSuccess(t *testing.T) {
 	utils := &Utils{}
 
-	resourcePath := os.Getenv("WORKSPACE") + exampleKernelModulElfFIlePath1
+	resourcePath := os.Getenv("KMODULE")
 	println("resourcePath:", resourcePath)
 	result, _ := utils.GetModuleDescriptionFromElf(resourcePath)
 
-	assert.Equal(t, result, expectedDescription1)
+	assert.Equal(t, result, expectedDescription)
 }
 
 func TestUtilsGetModuleDescriptionFromElfFailWhenReadingNonExistsFile(t *testing.T) {
