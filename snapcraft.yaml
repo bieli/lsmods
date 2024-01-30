@@ -1,21 +1,22 @@
 name: lsmods
-version: "1.0.0"
-summary: LSMODS let you inspect loaded kernel modules with descriptions
+base: core20
+version: git
+summary: Terminal tool to show all enabled Linux Kernel modules with descriptions.
 description: |
-  Show all loaded kernel modules with descriptions
-grade: stable
-confinement: strict
+  This is terminal tool for listing sorted by name all 
+  Linux Kernel modules (line by line).
 
-parts:
-  go:
-    source-tag: go1.15.4
-  lsmods:
-    plugin: go
-    go-importpath: github.com/bieli/lsmods
-    source: .
-    source-type: git
-    after: [go]
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
 
 apps:
   lsmods:
     command: bin/lsmods
+    plugs:
+      - home
+
+parts:
+  lsmods:
+    plugin: go
+    source-type: git
+    source: https://github.com/bieli/lsmods
