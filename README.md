@@ -30,7 +30,7 @@ zstd_compress			Zstd Compressor
 
 ## How to run unit test
 ```bash
-$ make test
+$ make tests
 ```
 
 ## How to run
